@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fault Report</title>
+<style>
+  :root{
+    --navy:#12213C;
+    --navy-deep:#0B1729;
+    --amber:#FFB703;
+    --amber-deep:#C97F00;
+    --teal:#1E8A7C;
+    --teal-deep:#146157;
+    --red:#E5383B;
+    --red-deep:#A82A2C;
+    --paper:#FFF8EF;
+    --card:#FFFFFF;
+    --ink:#1B1B1E;
+    --grey:#6B6560;
+    --line:#EADFCB;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    line-height:1.45;
+  }
+
+  /* ---- Header: destination-blind styling ---- */
+  .band{
+    background:var(--navy);
+    background-image:linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
+    color:var(--paper);
+    padding:20px 20px 18px;
+    position:relative;
+    overflow:hidden;
+  }
+  .band-top{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .badge{
+    flex:0 0 auto;
+    width:46px;
+    height:46px;
+    border-radius:8px;
+    background:var(--amber);
+    color:var(--navy-deep);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .badge svg{ width:26px; height:26px; }
+  .band h1{
+    margin:0;
+    font-family:"SF Mono","Menlo",monospace;
+    font-size:22px;
+    font-weight:800;
+    letter-spacing:1.5px;
+    color:var(--amber);
+    text-transform:uppercase;
+  }
+  .band p{
+    margin:3px 0 0;
+    color:#B9C2D6;
+    font-size:12.5px;
+  }
+  .route-line{
+    margin-top:14px;
+    height:6px;
+    border-radius:3px;
+    overflow:hidden;
+    display:flex;
+  }
+  .route-line span{ flex:1; }
+  .route-line span:nth-child(1){ background:var(--red); }
+  .route-line span:nth-child(2){ background:var(--amber); }
+  .route-line span:nth-child(3){ background:var(--teal); }
+
+  .wrap{ max-width:640px; margin:0 auto; padding:18px 16px 60px; }
+
+  .tabs{ display:flex; gap:8px; margin:16px 0 16px; }
+  .tab{
+    flex:1; text-align:center; padding:11px 8px;
+    border:2px solid var(--navy); background:var(--card); color:var(--navy);
+    font-weight:800; font-size:14px; cursor:pointer; border-radius:8px;
+  }
+  .tab.active{ background:var(--navy); color:var(--amber); }
+
+  .card{
+    background:var(--card);
+    border-radius:10px;
+    padding:20px 18px;
+    box-shadow:0 1px 0 var(--line), 0 8px 24px -18px rgba(18,33,60,0.4);
+  }
+
+  /* ---- Section grouping with colour accents ---- */
+  .section{
+    border-left:4px solid var(--line);
+    padding-left:14px;
+    margin-bottom:22px;
+  }
+  .section.s-id{ border-left-color:var(--navy); }
+  .section.s-vehicle{ border-left-color:var(--teal); }
+  .section.s-fault{ border-left-color:var(--amber-deep); }
+  .section-title{
+    font-size:12.5px;
+    font-weight:800;
+    color:var(--grey);
+    margin:0 0 12px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .section-title svg{ width:14px; height:14px; flex:0 0 auto; }
+  .section.s-id .section-title{ color:var(--navy); }
+  .section.s-vehicle .section-title{ color:var(--teal-deep); }
+  .section.s-fault .section-title{ color:var(--amber-deep); }
+
+  .row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .field{ margin-bottom:14px; }
+  .field:last-child{ margin-bottom:0; }
+  .field.full{ grid-column:1 / -1; }
+  label{ display:block; font-size:12.5px; font-weight:700; color:var(--grey); margin-bottom:5px; }
+  input, select, textarea{
+    width:100%; padding:11px 10px; border:1.5px solid var(--line); border-radius:6px;
+    font-size:16px; font-family:inherit; color:var(--ink); background:#FFFDF9;
+  }
+  input:focus, select:focus, textarea:focus{ outline:none; border-color:var(--teal); background:#fff; }
+  textarea{ resize:vertical; min-height:90px; }
+
+  /* ---- Severity: pure CSS radios ---- */
+  .sev-options{ display:flex; gap:8px; }
+  .sev-wrap{ flex:1; position:relative; display:block; }
+  .sev-wrap input{ position:absolute; opacity:0; inset:0; width:100%; height:100%; margin:0; cursor:pointer; z-index:2; }
+  .sev-btn{
+    display:block; text-align:center; padding:13px 6px; border:2px solid var(--line);
+    border-radius:6px; font-size:13px; font-weight:800; color:var(--grey); background:#FFFDF9;
+    pointer-events:none;
+  }
+  .sev-wrap input:checked + .sev-btn.crit{ background:var(--red); border-color:var(--red-deep); color:#fff; }
+  .sev-wrap input:checked + .sev-btn.att{ background:var(--amber); border-color:var(--amber-deep); color:var(--navy-deep); }
+  .sev-wrap input:checked + .sev-btn.min{ background:var(--teal); border-color:var(--teal-deep); color:#fff; }
+
+  .actions{ display:flex; gap:10px; margin-top:4px; flex-wrap:wrap; }
+  button.primary{
+    flex:1; min-width:120px; padding:14px 10px; border:none; border-radius:7px;
+    background:var(--amber); color:var(--navy-deep); font-weight:800; font-size:15px; cursor:pointer;
+  }
+  button.secondary{
+    flex:1; min-width:120px; padding:13px 10px; border:2px solid var(--navy); border-radius:7px;
+    background:transparent; color:var(--navy); font-weight:800; font-size:15px; cursor:pointer;
+  }
+  button.secondary.tone-teal{ border-color:var(--teal-deep); color:var(--teal-deep); }
+  button.secondary.tone-amber{ border-color:var(--amber-deep); color:var(--amber-deep); }
+
+  .hint{ font-size:12px; color:var(--grey); margin-top:10px; }
+  .status{ font-size:13px; font-weight:700; margin:10px 0 0; min-height:18px; }
+  .status.ok{ color:var(--teal-deep); }
+
+  hr.tear{
+    border:none; border-top:2px dashed var(--line); margin:22px 0;
+  }
+
+  /* ---- Saved reports ---- */
+  .log-item{
+    background:var(--card); border-radius:10px; padding:14px 16px; margin-bottom:12px;
+    border-left:6px solid var(--line);
+    box-shadow:0 1px 0 var(--line), 0 8px 24px -18px rgba(18,33,60,0.4);
+  }
+  .log-item.sev-critical{ border-left-color:var(--red); }
+  .log-item.sev-attention{ border-left-color:var(--amber); }
+  .log-item.sev-minor{ border-left-color:var(--teal); }
+  .log-top{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
+  .log-top .id{ font-weight:800; font-size:14.5px; color:var(--navy); }
+  .log-top .date{ font-size:12.5px; color:var(--grey); }
+  .log-meta{ font-size:13px; color:var(--grey); margin:5px 0 8px; }
+  .log-desc{ font-size:14px; margin-bottom:10px; white-space:pre-wrap; }
+  .tag{ display:inline-block; font-size:11.5px; font-weight:800; padding:3px 9px; border-radius:20px; margin:2px 6px 8px 0; }
+  .tag.critical{ background:var(--red); color:#fff; }
+  .tag.attention{ background:var(--amber); color:var(--navy-deep); }
+  .tag.minor{ background:var(--teal); color:#fff; }
+  .log-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+  .log-actions button{
+    flex:1; min-width:70px; padding:9px 6px; font-size:12.5px; border-radius:6px;
+    border:1.5px solid var(--navy); background:transparent; color:var(--navy); font-weight:700; cursor:pointer;
+  }
+  .empty{ text-align:center; color:var(--grey); padding:44px 10px; font-size:14px; }
+  .empty svg{ width:32px; height:32px; margin-bottom:10px; opacity:0.5; }
+
+  #copyBox{
+    display:none; width:100%; min-height:180px; margin-top:12px; padding:10px;
+    border:1.5px solid var(--line); border-radius:6px; font-size:13px; font-family:inherit;
+    white-space:pre-wrap; background:#fff;
+  }
+
+  @media print{
+    .band, .tabs, .actions, .hint, .status, #copyBox, .log-actions{ display:none !important; }
+    body{ background:#fff; }
+    .wrap{ padding:0; max-width:100%; }
+    .card{ border:none; padding:0; box-shadow:none; }
+    .section{ border-left-color:#999 !important; }
+    input, select, textarea{ border:none; border-bottom:1px solid #999; padding:4px 0; background:transparent; -webkit-print-color-adjust:exact; }
+    .sev-wrap input{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="band">
+  <div class="band-top">
+    <div class="badge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/>
+        <path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 18.9 6 17.5 6H4a2 2 0 0 0-2 2v10h3"/>
+        <circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>
+      </svg>
+    </div>
+    <div>
+      <h1>Fault Report</h1>
+      <p>Vehicle defect reporting — fill in, save, print or email</p>
+    </div>
+  </div>
+  <div class="route-line"><span></span><span></span><span></span></div>
+</div>
+
+<div class="wrap">
+
+  <div class="tabs">
+    <button type="button" class="tab active" id="tabNew">New Report</button>
+    <button type="button" class="tab" id="tabLog">Saved Reports</button>
+  </div>
+
+  <div id="viewNew" class="card">
+
+    <div class="section s-id">
+      <p class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+        Driver &amp; duty
+      </p>
+      <div class="row">
+        <div class="field">
+          <label for="fDriver">Your name</label>
+          <input id="fDriver" type="text" placeholder="Driver name" autocomplete="name">
+        </div>
+        <div class="field">
+          <label for="fDuty">Duty number</label>
+          <input id="fDuty" type="text" placeholder="e.g. 214">
+        </div>
+      </div>
+    </div>
+
+    <div class="section s-vehicle">
+      <p class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 18.9 6 17.5 6H4a2 2 0 0 0-2 2v10h3"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>
+        Vehicle &amp; time
+      </p>
+      <div class="row">
+        <div class="field">
+          <label for="fBus">Bus / fleet number</label>
+          <input id="fBus" type="text" placeholder="e.g. 3057">
+        </div>
+        <div class="field">
+          <label for="fDate">Date</label>
+          <input id="fDate" type="date">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="fTime">Time of fault</label>
+          <input id="fTime" type="time">
+        </div>
+        <div class="field">
+          <label for="fLocation">Fault area</label>
+          <select id="fLocation">
+            <option value="">Select…</option>
+            <option>Engine / drivetrain</option>
+            <option>Brakes</option>
+            <option>Doors</option>
+            <option>Ticket machine / validator</option>
+            <option>Destination display</option>
+            <option>Interior (seats, floor, handrails)</option>
+            <option>Exterior / bodywork</option>
+            <option>Electrical / lighting</option>
+            <option>Wheelchair ramp / lift</option>
+            <option>CCTV / radio</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="section s-fault">
+      <p class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+        The fault
+      </p>
+
+      <div class="field full">
+        <label>Severity</label>
+        <div class="sev-options">
+          <label class="sev-wrap">
+            <input type="radio" name="severity" value="critical">
+            <span class="sev-btn crit">Safety critical</span>
+          </label>
+          <label class="sev-wrap">
+            <input type="radio" name="severity" value="attention">
+            <span class="sev-btn att">Needs attention</span>
+          </label>
+          <label class="sev-wrap">
+            <input type="radio" name="severity" value="minor">
+            <span class="sev-btn min">Minor</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="field full">
+        <label for="fDesc">Fault description</label>
+        <textarea id="fDesc" placeholder="Describe what happened, what you noticed, and any action already taken"></textarea>
+      </div>
+
+      <div class="field full">
+        <label for="fReported">Reported to control? (optional)</label>
+        <input id="fReported" type="text" placeholder="e.g. Yes, 09:40, spoke to Dispatch">
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="primary" id="btnSave">Save report</button>
+      <button type="button" class="secondary" id="btnClear">Clear form</button>
+    </div>
+    <div class="status" id="saveStatus"></div>
+
+    <hr class="tear">
+
+    <div class="actions">
+      <button type="button" class="secondary" id="btnPrintForm">Print</button>
+      <button type="button" class="secondary tone-teal" id="btnShareForm">Share</button>
+      <button type="button" class="secondary tone-amber" id="btnCopyForm">Copy text</button>
+    </div>
+    <textarea id="copyBox" readonly></textarea>
+    <div class="hint">If Print doesn't open a dialog on your device, try Share, or Copy text and paste it into an email or message yourself.</div>
+  </div>
+
+  <div id="viewLog" style="display:none;">
+    <div id="logList"></div>
+  </div>
+
+</div>
+
+<script>
+
+(function(){
+  const $ = (id) => document.getElementById(id);
+  const STORAGE_KEY_PREFIX = 'faultreport:';
+  let currentLog = [];
+
+  // Storage shim — uses Claude's own storage when available (inside the Claude app),
+  // and falls back to standard browser storage otherwise (e.g. opened as a plain file).
+  const hasClaudeStorage = (typeof window.storage !== 'undefined' && window.storage && typeof window.storage.set === 'function');
+  const storage = hasClaudeStorage ? {
+    async set(key, value){ return window.storage.set(key, value, false); },
+    async get(key){ const r = await window.storage.get(key, false); if(!r) throw new Error('not found'); return r; },
+    async delete(key){ return window.storage.delete(key, false); },
+    async list(prefix){ const r = await window.storage.list(prefix, false); return r || {keys:[]}; }
+  } : {
+    async set(key, value){
+      localStorage.setItem(key, value);
+      return {key, value};
+    },
+    async get(key){
+      const v = localStorage.getItem(key);
+      if(v === null) throw new Error('not found');
+      return {key, value: v};
+    },
+    async delete(key){
+      localStorage.removeItem(key);
+      return {key, deleted:true};
+    },
+    async list(prefix){
+      const keys = [];
+      for(let i=0; i<localStorage.length; i++){
+        const k = localStorage.key(i);
+        if(k && k.indexOf(prefix)===0) keys.push(k);
+      }
+      return {keys};
+    }
+  };
+
+  function todayISO(){ return new Date().toISOString().slice(0,10); }
+  function nowHM(){ const d=new Date(); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+
+  function showView(v){
+    $('viewNew').style.display = v==='new' ? 'block' : 'none';
+    $('viewLog').style.display = v==='log' ? 'block' : 'none';
+    $('tabNew').classList.toggle('active', v==='new');
+    $('tabLog').classList.toggle('active', v==='log');
+    if(v==='log') renderLog();
+  }
+
+  function getSeverity(){
+    const el = document.querySelector('input[name="severity"]:checked');
+    return el ? el.value : null;
+  }
+  function setSeverityUI(val){
+    document.querySelectorAll('input[name="severity"]').forEach(r=> r.checked = (r.value===val));
+  }
+
+  function clearForm(keepDriver){
+    const driver = $('fDriver').value;
+    $('fDuty').value=''; $('fBus').value='';
+    $('fDate').value = todayISO(); $('fTime').value = nowHM();
+    $('fLocation').value=''; $('fDesc').value=''; $('fReported').value='';
+    setSeverityUI(null);
+    if(keepDriver) $('fDriver').value = driver;
+    $('saveStatus').textContent='';
+    $('copyBox').style.display = 'none';
+  }
+
+  function readForm(){
+    return {
+      driver: $('fDriver').value.trim(), duty: $('fDuty').value.trim(), bus: $('fBus').value.trim(),
+      date: $('fDate').value, time: $('fTime').value, location: $('fLocation').value,
+      severity: getSeverity(), desc: $('fDesc').value.trim(), reported: $('fReported').value.trim()
+    };
+  }
+
+  function validateForm(f){
+    if(!f.driver) return 'Add your name';
+    if(!f.duty) return 'Add your duty number';
+    if(!f.bus) return 'Add the bus number';
+    if(!f.desc) return 'Describe the fault';
+    return null;
+  }
+
+  function sevLabel(s){
+    if(s==='critical') return 'Safety critical';
+    if(s==='attention') return 'Needs attention';
+    if(s==='minor') return 'Minor';
+    return 'Not set';
+  }
+
+  function reportText(r){
+    return 'FAULT REPORT\n\n'+
+      'Driver: '+r.driver+'\n'+
+      'Duty number: '+r.duty+'\n'+
+      'Bus number: '+r.bus+'\n'+
+      'Date: '+r.date+'\n'+
+      'Time: '+r.time+'\n'+
+      'Fault area: '+(r.location || 'Not specified')+'\n'+
+      'Severity: '+sevLabel(r.severity)+'\n\n'+
+      'Description:\n'+r.desc+'\n\n'+
+      'Reported to control: '+(r.reported || 'Not recorded')+'\n';
+  }
+
+  async function saveReport(){
+    const f = readForm();
+    const err = validateForm(f);
+    const statusEl = $('saveStatus');
+    if(err){ statusEl.textContent = err; statusEl.className = 'status'; return; }
+    const id = 'FR-' + Date.now();
+    try{
+      await storage.set(STORAGE_KEY_PREFIX + id, JSON.stringify(Object.assign({id}, f)));
+      statusEl.textContent = 'Saved. Find it under "Saved Reports".';
+      statusEl.className = 'status ok';
+      clearForm(true);
+    }catch(e){
+      statusEl.textContent = 'Could not save — you can still print, share or copy this report now.';
+      statusEl.className = 'status';
+    }
+  }
+
+  async function loadAllReports(){
+    const list = [];
+    try{
+      const res = await storage.list(STORAGE_KEY_PREFIX);
+      const keys = (res && res.keys) ? res.keys : [];
+      for(const k of keys){
+        try{ const r = await storage.get(k); if(r && r.value) list.push(JSON.parse(r.value)); }catch(e){}
+      }
+    }catch(e){}
+    list.sort((a,b)=> (b.date+b.time).localeCompare(a.date+a.time));
+    return list;
+  }
+
+  function escapeHtml(s){
+    if(!s) return '';
+    return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  async function renderLog(){
+    const listEl = $('logList');
+    listEl.innerHTML = '<div class="empty">Loading…</div>';
+    currentLog = await loadAllReports();
+    if(currentLog.length===0){
+      listEl.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 18.9 6 17.5 6H4a2 2 0 0 0-2 2v10h3"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg><br>No saved reports yet.<br>Fill in New Report and hit Save.</div>';
+      return;
+    }
+    listEl.innerHTML = '';
+    currentLog.forEach(r=>{
+      const div = document.createElement('div');
+      div.className = 'log-item' + (r.severity ? ' sev-'+r.severity : '');
+
+      const top = document.createElement('div');
+      top.className = 'log-top';
+      top.innerHTML = '<span class="id">Duty '+escapeHtml(r.duty)+' · Bus '+escapeHtml(r.bus)+'</span>'+
+                       '<span class="date">'+escapeHtml(r.date||'')+' '+escapeHtml(r.time||'')+'</span>';
+      div.appendChild(top);
+
+      const meta = document.createElement('div');
+      meta.className = 'log-meta';
+      meta.textContent = r.driver + (r.location ? ' · '+r.location : '');
+      div.appendChild(meta);
+
+      if(r.severity){
+        const tag = document.createElement('span');
+        tag.className = 'tag '+r.severity;
+        tag.textContent = sevLabel(r.severity);
+        div.appendChild(tag);
+      }
+
+      const desc = document.createElement('div');
+      desc.className = 'log-desc';
+      desc.textContent = r.desc;
+      div.appendChild(desc);
+
+      const box = document.createElement('textarea');
+      box.readOnly = true;
+      box.style.display = 'none';
+      box.style.width = '100%';
+      box.style.minHeight = '160px';
+      box.style.marginBottom = '8px';
+      box.style.fontFamily = 'inherit';
+      box.style.fontSize = '13px';
+      box.value = reportText(r);
+      div.appendChild(box);
+
+      const actions = document.createElement('div');
+      actions.className = 'log-actions';
+
+      const emailBtn = document.createElement('button');
+      emailBtn.type = 'button'; emailBtn.textContent = 'Email';
+      emailBtn.addEventListener('click', ()=>{
+        const subject = 'Fault Report - Duty '+r.duty+' - Bus '+r.bus;
+        window.location.href = 'mailto:?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(reportText(r));
+      });
+      actions.appendChild(emailBtn);
+
+      const shareBtn = document.createElement('button');
+      shareBtn.type = 'button'; shareBtn.textContent = 'Share';
+      shareBtn.addEventListener('click', async ()=>{
+        const text = reportText(r);
+        if(navigator.share){
+          try{ await navigator.share({title:'Fault Report', text}); return; }catch(e){}
+        }
+        box.style.display = box.style.display==='none' ? 'block' : 'none';
+      });
+      actions.appendChild(shareBtn);
+
+      const copyBtn = document.createElement('button');
+      copyBtn.type = 'button'; copyBtn.textContent = 'Copy text';
+      copyBtn.addEventListener('click', async ()=>{
+        const text = reportText(r);
+        try{
+          await navigator.clipboard.writeText(text);
+          copyBtn.textContent = 'Copied ✓';
+          setTimeout(()=> copyBtn.textContent = 'Copy text', 1500);
+        }catch(e){
+          box.style.display = box.style.display==='none' ? 'block' : 'none';
+        }
+      });
+      actions.appendChild(copyBtn);
+
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button'; delBtn.textContent = 'Delete';
+      delBtn.addEventListener('click', async ()=>{
+        try{ await storage.delete(STORAGE_KEY_PREFIX + r.id); }catch(e){}
+        renderLog();
+      });
+      actions.appendChild(delBtn);
+
+      div.appendChild(actions);
+      listEl.appendChild(div);
+    });
+  }
+
+  function init(){
+    $('fDate').value = todayISO();
+    $('fTime').value = nowHM();
+
+    $('tabNew').addEventListener('click', ()=> showView('new'));
+    $('tabLog').addEventListener('click', ()=> showView('log'));
+
+    $('btnSave').addEventListener('click', saveReport);
+    $('btnClear').addEventListener('click', ()=> clearForm(false));
+
+    $('btnPrintForm').addEventListener('click', ()=>{
+      window.print();
+    });
+
+    $('btnShareForm').addEventListener('click', async ()=>{
+      const text = reportText(readForm());
+      if(navigator.share){
+        try{ await navigator.share({title:'Fault Report', text}); return; }catch(e){}
+      }
+      const box = $('copyBox');
+      box.value = text;
+      box.style.display = 'block';
+    });
+
+    $('btnCopyForm').addEventListener('click', async ()=>{
+      const text = reportText(readForm());
+      const box = $('copyBox');
+      try{
+        await navigator.clipboard.writeText(text);
+        $('btnCopyForm').textContent = 'Copied ✓';
+        setTimeout(()=> $('btnCopyForm').textContent = 'Copy text', 1500);
+      }catch(e){
+        box.value = text;
+        box.style.display = 'block';
+      }
+    });
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  }else{
+    init();
+  }
+})();
+
+</script>
+
+</body>
+</html>
